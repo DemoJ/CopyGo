@@ -1,0 +1,173 @@
+/* Highlighting Overlay - Neon Style */
+.copygo-highlight-overlay {
+  position: absolute;
+  /* Vivid Pink/Purple Neon Glow */
+  border: 2px solid #FF3CAC; 
+  background-color: rgba(255, 60, 172, 0.05);
+  z-index: 2147483646;
+  pointer-events: none;
+  transition: all 0.15s ease-out;
+  box-sizing: border-box;
+  display: none;
+  /* Cyberpunk Glow */
+  box-shadow: 0 0 10px #FF3CAC, 0 0 20px rgba(255, 60, 172, 0.4) inset;
+  border-radius: 4px;
+}
+
+.copygo-highlight-overlay.locked {
+  /* Cyan Locked State */
+  border-color: #00F260;
+  background-color: rgba(0, 242, 96, 0.1);
+  box-shadow: 0 0 15px #00F260, 0 0 30px rgba(0, 242, 96, 0.2) inset;
+}
+
+/* Floating Toolbar - Dark Glass */
+.copygo-toolbar {
+  position: absolute;
+  z-index: 2147483647;
+  background: rgba(10, 10, 10, 0.85); /* Deep black glass */
+  backdrop-filter: blur(12px);
+  border-radius: 12px;
+  padding: 6px;
+  display: flex;
+  align-items: center;
+  box-shadow: 0 15px 35px rgba(0,0,0,0.6);
+  font-family: 'Inter', system-ui, sans-serif;
+  color: white;
+  animation: copygo-scale-up 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+  height: 44px;
+  border: 1px solid rgba(255,255,255,0.15);
+  min-width: 300px; /* Ensure space */
+}
+
+.copygo-toolbar button {
+  background: transparent;
+  border: none;
+  color: #ccc;
+  cursor: pointer !important;
+  padding: 0 16px;
+  font-size: 13px;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  transition: all 0.2s;
+  outline: none;
+  height: 32px;
+  border-radius: 8px;
+  white-space: nowrap;
+}
+
+.copygo-toolbar button:hover {
+  background: rgba(255,255,255,0.1);
+  color: #fff;
+  transform: translateY(-1px);
+}
+
+.copygo-toolbar button.active {
+  background: rgba(255, 60, 172, 0.2);
+  color: #FF3CAC;
+}
+
+/* Add a cool gradient border bottom to toolbar */
+.copygo-toolbar::after {
+  content: '';
+  position: absolute;
+  bottom: -1px; left: 10px; right: 10px;
+  height: 2px;
+  background: linear-gradient(90deg, #FF3CAC 0%, #784BA0 50%, #2B86C5 100%);
+  border-radius: 2px;
+  opacity: 0.5;
+}
+
+.copygo-toolbar .separator {
+  width: 1px;
+  background-color: rgba(255, 255, 255, 0.15);
+  margin: 0 6px;
+  height: 20px;
+}
+
+/* Dropdown - Dark Modern */
+.copygo-dropdown {
+  position: absolute;
+  top: calc(100% + 10px);
+  left: 50%;
+  transform: translateX(-50%);
+  background: #1a1a1a;
+  border: 1px solid rgba(255,255,255,0.1);
+  border-radius: 10px;
+  display: none;
+  flex-direction: column;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+  z-index: 2147483648;
+  min-width: 150px;
+  padding: 6px;
+}
+
+.copygo-dropdown.show {
+  display: flex;
+  animation: copygo-fade 0.2s ease;
+}
+
+.copygo-dropdown button {
+  text-align: left;
+  width: 100%;
+  justify-content: flex-start;
+  color: #aaa;
+}
+
+.copygo-dropdown button:hover {
+  background: #333;
+  color: #fff;
+}
+
+/* Icons */
+.copygo-icon {
+  width: 18px;
+  height: 18px;
+  fill: currentColor;
+}
+
+/* Toast - Neon Style */
+.copygo-toast {
+  position: absolute;
+  background: #000;
+  border: 1px solid #00F260;
+  color: #00F260;
+  font-weight: 700;
+  padding: 10px 20px;
+  border-radius: 8px;
+  pointer-events: none;
+  animation: copygo-float 1s ease forwards;
+  z-index: 2147483650;
+  box-shadow: 0 5px 15px rgba(0, 242, 96, 0.2);
+  font-family: monospace;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+/* Animations */
+@keyframes copygo-scale-up {
+  from { opacity: 0; transform: scale(0.8); }
+  to { opacity: 1; transform: scale(1); }
+}
+
+@keyframes copygo-fade {
+  from { opacity: 0; transform: translateX(-50%) translateY(-5px); }
+  to { opacity: 1; transform: translateX(-50%) translateY(0); }
+}
+
+@keyframes copygo-float {
+  0% { opacity: 0; transform: translateY(10px); }
+  20% { opacity: 1; transform: translateY(0); }
+  80% { opacity: 1; transform: translateY(-5px); }
+  100% { opacity: 0; transform: translateY(-20px); }
+}
+
+/* Cursor */
+body.copygo-inspector-active {
+  cursor: default !important;
+}
+body.copygo-is-selecting *:hover {
+  cursor: crosshair !important;
+}

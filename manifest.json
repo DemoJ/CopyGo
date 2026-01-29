@@ -1,0 +1,25 @@
+{
+  "manifest_version": 3,
+  "name": "CopyGo - 复制页面文字给你的 AI 们",
+  "version": "1.0",
+  "description": "像开发者工具一样选择网页元素，提取文字复制或导出为 TXT 或 Markdown。",
+  "permissions": [
+    "activeTab",
+    "scripting",
+    "storage",
+    "downloads"
+  ],
+  "background": {
+    "service_worker": "background.js"
+  },
+  "action": {
+    "default_popup": "popup.html"
+  },
+  "content_scripts": [
+    {
+      "matches": ["<all_urls>"],
+      "js": ["content.js"],
+      "css": ["content.css"]
+    }
+  ]
+}

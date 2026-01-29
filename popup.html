@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CopyGo</title>
+  <link rel="stylesheet" href="popup.css">
+</head>
+<body>
+  <div class="container">
+    <header>
+      <div class="header-left">
+        <h1>CopyGo</h1>
+        <p>复制页面文字给你的 AI 们</p>
+      </div>
+      <span id="open-settings" title="设置">⚙️</span>
+    </header>
+
+    <!-- 主界面 -->
+    <div id="main-view">
+      <div class="controls">
+        <button id="toggle-inspector" class="btn primary">
+          <svg style="width:16px;height:16px;fill:currentColor;" viewBox="0 0 24 24"><path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.39-.39-1.02-.39-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"/></svg>
+          <span>开启选择模式</span>
+        </button>
+      </div>
+
+      <div class="status-bar">
+        <span>已收集: <span id="count">0</span> 条</span>
+        <button id="clear-all" class="btn text-btn">清空</button>
+      </div>
+
+      <ul id="content-list">
+        <!-- 抓取的内容将显示在这里 -->
+        <li class="empty-state">暂无内容，请开启选择模式点击网页元素。</li>
+      </ul>
+
+      <div class="actions">
+        <button id="export-txt" class="btn secondary">导出 TXT</button>
+        <button id="export-md" class="btn secondary">导出 Markdown</button>
+      </div>
+    </div>
+
+    <!-- 设置界面 -->
+    <div id="settings-view" style="display: none;">
+      <h3>设置</h3>
+      <div class="setting-item">
+        <label>启动快捷键</label>
+        <div style="display: flex; gap: 10px;">
+           <input type="text" id="shortcut-input" placeholder="点击录制" readonly>
+           <button id="reset-shortcut" class="btn">重置</button>
+        </div>
+        <p>默认: Alt+X<br>页面内按 Esc 可退出选择。</p>
+      </div>
+      <div style="margin-top: auto; padding-top: 20px;">
+        <button id="back-to-main" class="btn primary">返回</button>
+      </div>
+    </div>
+  </div>
+  <script src="popup.js"></script>
+</body>
+</html>

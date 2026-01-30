@@ -17,39 +17,135 @@
     close: '<svg class="copygo-icon" viewBox="0 0 24 24"><path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>'
   };
 
+  function getListDepth(node) {
+    let depth = 0;
+    let parent = node.parentNode;
+    while (parent) {
+      const t = parent.tagName.toLowerCase();
+      if (t === 'ul' || t === 'ol') depth++;
+      parent = parent.parentNode;
+    }
+    return Math.max(0, depth - 1);
+  }
+
   function domToMarkdown(node) {
-    if (node.nodeType === 3) return node.textContent.replace(/([*_\\\[\]`])/g, '\\$1');
+    if (node.nodeType === 3) {
+      return node.textContent.replace(/([*_[\]`|])/g, '\\$1');
+    }
     if (node.nodeType !== 1) return '';
     if (window.getComputedStyle(node).display === 'none') return '';
+
     const tag = node.tagName.toLowerCase();
     const cls = (node.getAttribute('class') || '').toLowerCase();
+    
     if (['button', 'script', 'style', 'noscript', 'iframe', 'svg', 'input', 'select', 'textarea'].includes(tag)) return '';
     if (tag !== 'a' && tag !== 'img' && cls.includes('copy') && node.innerText.trim().length <= 10) return '';
-    let content = '';
+
+    // 特殊块：Pre/Code
     if (tag === 'pre') {
         const codeChild = node.querySelector('code');
-        return '```\n' + (codeChild ? codeChild.innerText : node.innerText) + '\n```\n\n';
+        const text = (codeChild ? codeChild.innerText : node.innerText).trim();
+        return '\n```\n' + text + '\n```\n\n';
     }
-    node.childNodes.forEach(child => { content += domToMarkdown(child); });
+
+    // 特殊块：Table Row (修复表头分割线缺失问题)
+    if (tag === 'tr') {
+        const cells = [];
+        const alignments = [];
+        let hasTh = false;
+        
+        node.childNodes.forEach(child => {
+            if (child.nodeType !== 1) return;
+            const cTag = child.tagName.toLowerCase();
+            if (cTag === 'td' || cTag === 'th') {
+                if (cTag === 'th') hasTh = true;
+                
+                // 探测对齐方式
+                const align = child.getAttribute('align') || child.style.textAlign;
+                if (align === 'center') alignments.push(':---:');
+                else if (align === 'right') alignments.push('---:');
+                else alignments.push('---');
+
+                // 获取单元格内容
+                let cText = domToMarkdown(child).trim().replace(/\n/g, '<br>');
+                cells.push(cText || ' ');
+            }
+        });
+
+        if (cells.length === 0) return '';
+
+        const rowStr = '| ' + cells.join(' | ') + ' |\n';
+        
+        // 决定是否在此行后插入分割线 (|---|---|)
+        // 1. 包含 <th> 标签
+        // 2. 是 thead 中的第一行
+        // 3. 是 table 或 tbody 中的第一行（兼容非规范 HTML 表格）
+        const isFirstInParent = !node.previousElementSibling || node.previousElementSibling.tagName !== 'TR';
+        const parentTag = node.parentNode.tagName.toLowerCase();
+        
+        const shouldAddSeparator = hasTh || (parentTag === 'thead' && isFirstInParent) || 
+                                   ((parentTag === 'table' || parentTag === 'tbody') && isFirstInParent);
+
+        if (shouldAddSeparator) {
+            const sepStr = '| ' + alignments.join(' | ') + ' |\n';
+            return rowStr + sepStr;
+        }
+        return rowStr;
+    }
+
+    if (tag === 'td' || tag === 'th') {
+        let content = '';
+        node.childNodes.forEach(child => content += domToMarkdown(child));
+        return content;
+    }
+
+    if (tag === 'li') {
+        const depth = getListDepth(node);
+        const indent = '  '.repeat(depth);
+        let content = '';
+        node.childNodes.forEach(child => {
+            content += domToMarkdown(child).trim() + ' ';
+        });
+        const parentTag = node.parentNode.tagName.toLowerCase();
+        const symbol = parentTag === 'ol' ? '1. ' : '- ';
+        return indent + symbol + content.trim() + '\n';
+    }
+
+    let content = '';
+    node.childNodes.forEach(child => content += domToMarkdown(child));
+    
     switch (tag) {
-      case 'h1': return '# ' + content + '\n\n';
-      case 'h2': return '## ' + content + '\n\n';
-      case 'h3': return '### ' + content + '\n\n';
-      case 'h4': return '#### ' + content + '\n\n';
-      case 'h5': return '##### ' + content + '\n\n';
-      case 'h6': return '###### ' + content + '\n\n';
-      case 'p': return content + '\n\n';
+      case 'h1': return '\n# ' + content.trim() + '\n\n';
+      case 'h2': return '\n## ' + content.trim() + '\n\n';
+      case 'h3': return '\n### ' + content.trim() + '\n\n';
+      case 'h4': return '\n#### ' + content.trim() + '\n\n';
+      case 'h5': return '\n##### ' + content.trim() + '\n\n';
+      case 'h6': return '\n###### ' + content.trim() + '\n\n';
+      case 'p': 
+      case 'div': 
+      case 'section': 
+      case 'article':
+      case 'header':
+      case 'footer':
+      case 'nav':
+      case 'main':
+        return content.trim() ? '\n' + content.trim() + '\n\n' : '';
       case 'br': return '  \n';
-      case 'hr': return '---\n\n';
-      case 'b': case 'strong': return '**' + content + '**';
-      case 'i': case 'em': return '*' + content + '*';
-      case 'del': case 's': return '~~' + content + '~~';
-      case 'code': return '`' + content + '`';
-      case 'blockquote': return '> ' + content.trim().replace(/\n/g, '\n> ') + '\n\n';
-      case 'a': return '[' + content + '](' + node.href + ')';
-      case 'img': return '![' + (node.alt || 'image') + '](' + node.src + ')';
-      case 'ul': case 'ol': return content + '\n';
-      case 'li': return '- ' + content.trim() + '\n';
+      case 'hr': return '\n---\n\n';
+      case 'b':
+      case 'strong': return ' **' + content.trim() + '** ';
+      case 'i':
+      case 'em': return ' *' + content.trim() + '* ';
+      case 'del':
+      case 's': return ' ~~' + content.trim() + '~~ ';
+      case 'code': return ' `' + content.trim() + '` ';
+      case 'blockquote': return '\n> ' + content.trim().replace(/\n/g, '\n> ') + '\n\n';
+      case 'a': return ' [' + content.trim() + '](' + node.href + ') ';
+      case 'img': return ' ![' + (node.alt || 'image') + '](' + node.src + ') ';
+      case 'ul': 
+      case 'ol': return '\n' + content + '\n';
+      case 'table': return '\n\n' + content + '\n\n';
+      case 'tbody': case 'thead': case 'tfoot': return content;
       default: return content;
     }
   }
@@ -91,11 +187,11 @@
     document.getElementById('cg-btn-export-md').addEventListener('click', handleExportMd);
     document.getElementById('cg-btn-close').addEventListener('click', handleClose);
     document.addEventListener('click', (e) => {
-      const dropdown = document.getElementById('cg-export-dropdown');
-      const exportBtn = document.getElementById('cg-btn-export');
-      if (dropdown && dropdown.classList.contains('show')) {
-        if (!dropdown.contains(e.target) && !exportBtn.contains(e.target)) {
-          dropdown.classList.remove('show'); exportBtn.classList.remove('active');
+      const d = document.getElementById('cg-export-dropdown');
+      const b = document.getElementById('cg-btn-export');
+      if (d && d.classList.contains('show')) {
+        if (!d.contains(e.target) && !b.contains(e.target)) {
+          d.classList.remove('show'); b.classList.remove('active');
         }
       }
     });
@@ -120,11 +216,11 @@
     const rect = target.getBoundingClientRect();
     const st = window.pageYOffset || document.documentElement.scrollTop;
     const sl = window.pageXOffset || document.documentElement.scrollLeft;
-    const th = 36;
-    let top = rect.top + st - th - 8;
+    const th = 40;
+    let top = rect.top + st - th - 12;
     let left = rect.left + sl;
-    if (top < st) top = rect.bottom + st + 8;
-    const maxLeft = document.documentElement.scrollWidth - 300; 
+    if (top < st) top = rect.bottom + st + 12;
+    const maxLeft = document.documentElement.scrollWidth - 320; 
     if (left > maxLeft) left = maxLeft;
     toolbarElement.style.top = top + 'px';
     toolbarElement.style.left = left + 'px';
@@ -132,7 +228,8 @@
     closeDropdown();
   }
 
-  function hideToolbar() { if (toolbarElement) { toolbarElement.style.display = 'none'; closeDropdown(); } } function closeDropdown() {
+  function hideToolbar() { if (toolbarElement) { toolbarElement.style.display = 'none'; closeDropdown(); } }
+  function closeDropdown() {
     const d = document.getElementById('cg-export-dropdown');
     const b = document.getElementById('cg-btn-export');
     if (d) d.classList.remove('show'); if (b) b.classList.remove('active');
@@ -161,14 +258,14 @@
     let text = (target.innerText || target.textContent).trim();
     if (text) {
       isLocked = true; currentTarget = target; currentText = text;
-      currentMarkdown = domToMarkdown(target).trim();
+      currentMarkdown = domToMarkdown(target).trim().replace(/\n{3,}/g, '\n\n');
       updateHighlight(target, true); showToolbar(target);
     }
   }
 
   function handleAdd(e) {
     if (!currentMarkdown) return;
-    saveTextToStorage(currentMarkdown); // 仅存储 Markdown 字符串
+    saveTextToStorage(currentMarkdown);
     showToast(e.target, '已收藏');
     handleClose(); 
   }
@@ -210,7 +307,8 @@
     chrome.runtime.sendMessage({ action: 'inspectorDisabled' }).catch(() => {});
   }
 
-  function showToast(btn, msg) { if (btn) { const r = btn.getBoundingClientRect(); showToastAt(r.left, r.top, msg); } } function showToastAt(x, y, msg) {
+  function showToast(btn, msg) { if (btn) { const r = btn.getBoundingClientRect(); showToastAt(r.left, r.top, msg); } }
+  function showToastAt(x, y, msg) {
     const t = document.createElement('div');
     t.className = 'copygo-toast'; t.textContent = msg;
     t.style.top = (y + window.scrollY - 30) + 'px';

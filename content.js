@@ -21,8 +21,10 @@
     let depth = 0;
     let parent = node.parentNode;
     while (parent) {
-      const t = parent.tagName.toLowerCase();
-      if (t === 'ul' || t === 'ol') depth++;
+      if (parent.nodeType === 1 && parent.tagName) {
+        const t = parent.tagName.toLowerCase();
+        if (t === 'ul' || t === 'ol') depth++;
+      }
       parent = parent.parentNode;
     }
     return Math.max(0, depth - 1);
@@ -80,8 +82,9 @@
         // 1. 包含 <th> 标签
         // 2. 是 thead 中的第一行
         // 3. 是 table 或 tbody 中的第一行（兼容非规范 HTML 表格）
-        const isFirstInParent = !node.previousElementSibling || node.previousElementSibling.tagName !== 'TR';
-        const parentTag = node.parentNode.tagName.toLowerCase();
+        const prev = node.previousElementSibling;
+        const isFirstInParent = !prev || (prev.tagName && prev.tagName.toLowerCase() !== 'tr');
+        const parentTag = (node.parentNode && node.parentNode.tagName) ? node.parentNode.tagName.toLowerCase() : '';
         
         const shouldAddSeparator = hasTh || (parentTag === 'thead' && isFirstInParent) || 
                                    ((parentTag === 'table' || parentTag === 'tbody') && isFirstInParent);
@@ -106,7 +109,7 @@
         node.childNodes.forEach(child => {
             content += domToMarkdown(child).trim() + ' ';
         });
-        const parentTag = node.parentNode.tagName.toLowerCase();
+        const parentTag = (node.parentNode && node.parentNode.tagName) ? node.parentNode.tagName.toLowerCase() : '';
         const symbol = parentTag === 'ol' ? '1. ' : '- ';
         return indent + symbol + content.trim() + '\n';
     }
@@ -255,11 +258,17 @@
     e.stopPropagation(); e.preventDefault();
     if (isLocked) resetState();
     const target = e.target;
-    let text = (target.innerText || target.textContent).trim();
+    let text = (target.innerText || target.textContent || '').trim();
     if (text) {
-      isLocked = true; currentTarget = target; currentText = text;
-      currentMarkdown = domToMarkdown(target).trim().replace(/\n{3,}/g, '\n\n');
-      updateHighlight(target, true); showToolbar(target);
+      try {
+        currentMarkdown = domToMarkdown(target).trim().replace(/\n{3,}/g, '\n\n');
+        isLocked = true; currentTarget = target; currentText = text;
+        updateHighlight(target, true); showToolbar(target);
+      } catch (err) {
+        console.error('CopyGo Extraction Error:', err);
+        showToastAt(e.clientX, e.clientY, '提取失败');
+        updateHighlight(target, false);
+      }
     }
   }
 
@@ -338,14 +347,14 @@
     if (inspectorEnabled) {
       document.body.classList.add('copygo-inspector-active');
       document.body.classList.add('copygo-is-selecting');
-      document.addEventListener('mouseover', handleMouseOver, true);
-      document.addEventListener('click', handleClick, true);
+      window.addEventListener('mouseover', handleMouseOver, true);
+      window.addEventListener('click', handleClick, true);
       chrome.runtime.sendMessage({ action: 'inspectorEnabled' }).catch(() => {});
     } else {
       document.body.classList.remove('copygo-inspector-active');
       document.body.classList.remove('copygo-is-selecting');
-      document.removeEventListener('mouseover', handleMouseOver, true);
-      document.removeEventListener('click', handleClick, true);
+      window.removeEventListener('mouseover', handleMouseOver, true);
+      window.removeEventListener('click', handleClick, true);
       resetState();
       chrome.runtime.sendMessage({ action: 'inspectorDisabled' }).catch(() => {});
     }

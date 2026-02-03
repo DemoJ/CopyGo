@@ -2,9 +2,9 @@
 
 一个强大的浏览器扩展，让你像开发者工具一样选择网页元素，提取文字并复制或导出为 TXT 或 Markdown 格式。非常适合将网页内容快速整理后发送给 AI 助手。
 
-[Chrome浏览器插件地址：](https://chromewebstore.google.com/detail/copygo-%E5%A4%8D%E5%88%B6%E9%A1%B5%E9%9D%A2%E6%96%87%E5%AD%97%E7%BB%99%E4%BD%A0%E7%9A%84-ai-%E4%BB%AC/cimljhjgmdkgldpaklejmgmkmbjlmham)
+Chrome浏览器：[Chrome浏览器插件地址](https://chromewebstore.google.com/detail/copygo-%E5%A4%8D%E5%88%B6%E9%A1%B5%E9%9D%A2%E6%96%87%E5%AD%97%E7%BB%99%E4%BD%A0%E7%9A%84-ai-%E4%BB%AC/cimljhjgmdkgldpaklejmgmkmbjlmham)
 
-[EDGE浏览器插件地址](https://microsoftedge.microsoft.com/addons/detail/copygo-%E5%A4%8D%E5%88%B6%E9%A1%B5%E9%9D%A2%E6%96%87%E5%AD%97%E7%BB%99%E4%BD%A0%E7%9A%84-ai-%E4%BB%AC/cbpijekabpeepjfaiagehegmolmdpckd)
+EDGE浏览器：[EDGE浏览器插件地址](https://microsoftedge.microsoft.com/addons/detail/copygo-%E5%A4%8D%E5%88%B6%E9%A1%B5%E9%9D%A2%E6%96%87%E5%AD%97%E7%BB%99%E4%BD%A0%E7%9A%84-ai-%E4%BB%AC/cbpijekabpeepjfaiagehegmolmdpckd)
 
 ## ✨ 功能特性
 

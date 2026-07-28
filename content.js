@@ -10,6 +10,8 @@
   let toolbarElement = null;
   let currentText = '';
   let currentMarkdown = '';
+  let toolbarFollowActive = false;
+  let toolbarFollowRaf = 0;
 
   const ICONS = {
     add: '<svg class="copygo-icon" viewBox="0 0 24 24"><path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/></svg>',
@@ -255,24 +257,111 @@
       if (aText) aText.innerText = count > 1 ? `收藏 (${count})` : '收藏';
   }
 
-  function showToolbar(target) {
-    if (!toolbarElement) createToolbar();
-    const rect = target.getBoundingClientRect();
-    const st = window.pageYOffset || document.documentElement.scrollTop;
-    const sl = window.pageXOffset || document.documentElement.scrollLeft;
-    const th = 40;
-    let top = rect.top + st - th - 12;
-    let left = rect.left + sl;
-    if (top < st) top = rect.bottom + st + 12;
-    const maxLeft = document.documentElement.scrollWidth - 320; 
-    if (left > maxLeft) left = maxLeft;
-    toolbarElement.style.top = top + 'px';
-    toolbarElement.style.left = left + 'px';
-    toolbarElement.style.display = 'flex';
-    closeDropdown();
+  function getVisibleUnionRect() {
+    const vw = window.innerWidth;
+    const vh = window.innerHeight;
+    let union = null;
+    selectedTargets.forEach((el) => {
+      if (!el || !el.getBoundingClientRect) return;
+      const r = el.getBoundingClientRect();
+      if (!union) {
+        union = { top: r.top, right: r.right, bottom: r.bottom, left: r.left };
+      } else {
+        union.top = Math.min(union.top, r.top);
+        union.left = Math.min(union.left, r.left);
+        union.right = Math.max(union.right, r.right);
+        union.bottom = Math.max(union.bottom, r.bottom);
+      }
+    });
+    if (!union) {
+      return { top: vh / 2 - 20, bottom: vh / 2 + 20, left: 16, right: vw - 16, visible: false };
+    }
+    const top = Math.max(union.top, 0);
+    const bottom = Math.min(union.bottom, vh);
+    const left = Math.max(union.left, 0);
+    const right = Math.min(union.right, vw);
+    if (bottom <= top || right <= left) {
+      const nearTop = union.bottom < 0;
+      const y = nearTop ? 12 : (union.top > vh ? vh - 56 : vh / 2 - 22);
+      return {
+        top: y,
+        bottom: y + 44,
+        left: Math.max(16, Math.min(union.left, vw - 16)),
+        right: Math.max(16, Math.min(union.right, vw - 16)),
+        visible: false
+      };
+    }
+    return { top, bottom, left, right, visible: true };
   }
 
-  function hideToolbar() { if (toolbarElement) { toolbarElement.style.display = 'none'; closeDropdown(); } }
+  function positionToolbar() {
+    if (!toolbarElement || toolbarElement.style.display === 'none') return;
+    const gap = 12;
+    const vis = getVisibleUnionRect();
+    const tw = toolbarElement.offsetWidth || 300;
+    const th = toolbarElement.offsetHeight || 44;
+    const vw = window.innerWidth;
+    const vh = window.innerHeight;
+
+    let top = vis.top - th - gap;
+    if (top < gap) top = vis.bottom + gap;
+    if (top + th > vh - gap || top < gap) {
+      top = Math.min(vis.bottom, vh) - th - gap;
+      if (top < gap) top = gap;
+      if (top + th > vh - gap) top = Math.max(gap, vh - th - gap);
+    }
+
+    let left = vis.left;
+    if (left + tw > vw - gap) left = vw - tw - gap;
+    if (left < gap) left = gap;
+
+    toolbarElement.style.top = top + 'px';
+    toolbarElement.style.left = left + 'px';
+  }
+
+  function onToolbarFollowEvent() {
+    if (toolbarFollowRaf) return;
+    toolbarFollowRaf = requestAnimationFrame(() => {
+      toolbarFollowRaf = 0;
+      if (!isLocked || !toolbarElement || toolbarElement.style.display === 'none') return;
+      closeDropdown();
+      positionToolbar();
+    });
+  }
+
+  function startToolbarFollow() {
+    if (toolbarFollowActive) return;
+    toolbarFollowActive = true;
+    window.addEventListener('scroll', onToolbarFollowEvent, true);
+    window.addEventListener('resize', onToolbarFollowEvent);
+  }
+
+  function stopToolbarFollow() {
+    if (!toolbarFollowActive) return;
+    toolbarFollowActive = false;
+    window.removeEventListener('scroll', onToolbarFollowEvent, true);
+    window.removeEventListener('resize', onToolbarFollowEvent);
+    if (toolbarFollowRaf) {
+      cancelAnimationFrame(toolbarFollowRaf);
+      toolbarFollowRaf = 0;
+    }
+  }
+
+  function showToolbar() {
+    if (!toolbarElement) createToolbar();
+    toolbarElement.style.display = 'flex';
+    closeDropdown();
+    positionToolbar();
+    startToolbarFollow();
+  }
+
+  function hideToolbar() {
+    stopToolbarFollow();
+    if (toolbarElement) {
+      toolbarElement.style.display = 'none';
+      closeDropdown();
+    }
+  }
   function closeDropdown() {
     const d = document.getElementById('cg-export-dropdown');
     const b = document.getElementById('cg-btn-export');

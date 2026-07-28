@@ -21,9 +21,9 @@
   box-shadow: 0 0 15px #00F260, 0 0 30px rgba(0, 242, 96, 0.2) inset;
 }
 
-/* Floating Toolbar - Dark Glass */
+/* Floating Toolbar - Dark Glass, fixed to viewport */
 .copygo-toolbar {
-  position: absolute;
+  position: fixed;
   z-index: 2147483647;
   background: rgba(10, 10, 10, 0.85); /* Deep black glass */
   backdrop-filter: blur(12px);
